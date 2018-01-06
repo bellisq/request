@@ -1,0 +1,29 @@
+{
+    "name": "bellisq/request",
+    "description": "Request Data Container",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Showsay You",
+            "email": "akizuki.c10.l65@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.2",
+        "strictphp/property": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Bellisq\\Request\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Bellisq\\Request\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.5"
+    }
+}
