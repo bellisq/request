@@ -1,0 +1,193 @@
+<?php
+
+namespace Bellisq\Request\Containers;
+
+use Bellisq\Request\Containers\RequestDataContainer;
+use Closure;
+use Strict\Property\Intermediate\PropertyRegister;
+use Strict\Property\Utility\StrictPropertyContainer;
+use DomainException;
+
+
+/**
+ * [Class] HTTP Request Line (Mutable)
+ *
+ * @author Showsay You <akizuki.c10.l65@gmail.com>
+ * @copyright 2017 Bellisq. All Rights Reserved.
+ * @package bellisq/request
+ * @since 1.0.0
+ *
+ * @property string   $scheme
+ * @property string   $host
+ * @property int      $port
+ * @property string   $path
+ * @property string   $query
+ * @property string   $method
+ * @property string   $protocol
+ * @property-read string $uri
+ */
+class HttpRequestLineMutable
+    extends StrictPropertyContainer
+{
+    /** @var RequestDataContainer */
+    private $dataContainer;
+
+    public function __construct(array $server, RequestDataContainer $rdc)
+    {
+        parent::__construct();
+
+        $this->dataContainer = $rdc;
+
+        $https = false;
+        if (isset($server['HTTP_X_FORWARDED_PROTO'])) {
+            $https = ('https' === strtolower($server['HTTP_X_FORWARDED_PROTO']));
+        } else if (isset($server['HTTPS'])) {
+            $https = ('off' !== strtolower($server['HTTPS']));
+        }
+        $this->scheme = ($https ? RequestDataContainer::SCHEME_HTTPS : RequestDataContainer::SCHEME_HTTP);
+
+        $this->host = $server['HTTP_HOST'] ?? '';
+
+        if (isset($server['HTTP_X_FORWARDED_PROTO']) || !isset($server['SERVER_PORT'])) {
+            $this->port = $https ? RequestDataContainer::PORT_HTTPS : RequestDataContainer::PORT_HTTP;
+        } else {
+            $this->port = (int)$server['SERVER_PORT'];
+        }
+
+        $this->path = explode('?', $server['REQUEST_URI'] ?? '')[0];
+
+        $this->query = $server['QUERY_STRING'] ?? '';
+
+        $this->method = $server['REQUEST_METHOD'] ?? RequestDataContainer::METHOD_GET;
+
+        $this->protocol = $server['SERVER_PROTOCOL'] ?? RequestDataContainer::PROTOCOL_HTTP11;
+    }
+
+    protected function registerProperty(PropertyRegister $propertyRegister): void
+    {
+        $exl = [
+            'scheme'   => RequestDataContainer::VAR_LINE_SCHEME,
+            'host'     => RequestDataContainer::VAR_LINE_HOST,
+            'path'     => RequestDataContainer::VAR_LINE_PATH,
+            'query'    => RequestDataContainer::VAR_LINE_QUERY,
+            'method'   => RequestDataContainer::VAR_LINE_METHOD,
+            'protocol' => RequestDataContainer::VAR_LINE_PROTOCOL
+        ];
+        foreach ($exl as $key => $value) {
+            $this->registerStringProperty($propertyRegister, $key, $value);
+        }
+
+        $propertyRegister
+            ->newVirtualProperty(
+                'port',
+                $this->generateIntGetter(RequestDataContainer::VAR_LINE_PORT),
+                $this->generateIntSetter(RequestDataContainer::VAR_LINE_PORT)
+            );
+
+        $propertyRegister
+            ->newVirtualProperty(
+                'uri',
+                function (): string {
+                    $port = ':' . $this->port;
+                    if (($this->port === RequestDataContainer::PORT_HTTP && $this->scheme === RequestDataContainer::SCHEME_HTTP) ||
+                        ($this->port === RequestDataContainer::PORT_HTTPS && $this->scheme === RequestDataContainer::SCHEME_HTTPS)) {
+                        $port = '';
+                    }
+
+                    $query = $this->query;
+                    $query = ($query === '') ? '' : ('?' . $query);
+                    return $this->scheme . '://' . $this->host . $port . $this->path . $query;
+                },
+                null
+            );
+
+        $allowedScheme = [
+            RequestDataContainer::SCHEME_HTTPS => true,
+            RequestDataContainer::SCHEME_HTTP  => true
+        ];
+        $propertyRegister
+            ->addSetterHook('scheme', function (string $value, Closure $next) use ($allowedScheme): void {
+                if (!isset($allowedScheme[$value])) {
+                    throw new DomainException;
+                }
+                $next($value);
+            });
+
+        $propertyRegister
+            ->addSetterHook('port', function (int $value, Closure $next) {
+                if ($value < 0 || 65535 < $value) {
+                    throw new DomainException;
+                }
+                $next($value);
+            });
+
+        $allowedMethod = [
+            RequestDataContainer::METHOD_GET    => true,
+            RequestDataContainer::METHOD_POST   => true,
+            RequestDataContainer::METHOD_PUT    => true,
+            RequestDataContainer::METHOD_DELETE => true,
+        ];
+        $propertyRegister
+            ->addSetterHook('method', function (string $value, Closure $next) use ($allowedMethod) {
+                if (!isset($allowedMethod[$value])) {
+                    throw new DomainException;
+                }
+                $next($value);
+                $this->dataContainer->methodChanged();
+            });
+
+        $allowedProtocol = [
+            RequestDataContainer::PROTOCOL_HTTP10 => true,
+            RequestDataContainer::PROTOCOL_HTTP11 => true,
+            RequestDataContainer::PROTOCOL_HTTP20 => true,
+        ];
+        $propertyRegister
+            ->addSetterHook('protocol', function (string $value, Closure $next) use ($allowedProtocol) {
+                if (!isset($allowedProtocol[$value])) {
+                    throw new DomainException;
+                }
+                $next($value);
+            });
+    }
+
+    private function registerStringProperty(
+        PropertyRegister $propertyRegister,
+        string $propertyName,
+        string $containerKey
+    ): void {
+        $propertyRegister
+            ->newVirtualProperty(
+                $propertyName,
+                $this->generateStringGetter($containerKey),
+                $this->generateStringSetter($containerKey)
+            );
+    }
+
+    private function generateStringGetter(string $containerKey): Closure
+    {
+        return function () use ($containerKey): string {
+            return $this->dataContainer[$containerKey];
+        };
+    }
+
+    private function generateStringSetter(string $containerKey): Closure
+    {
+        return function (string $value) use ($containerKey): void {
+            $this->dataContainer[$containerKey] = $value;
+        };
+    }
+
+    private function generateIntGetter(string $containerKey): Closure
+    {
+        return function () use ($containerKey): int {
+            return $this->dataContainer[$containerKey];
+        };
+    }
+
+    private function generateIntSetter(string $containerKey): Closure
+    {
+        return function (int $value) use ($containerKey): void {
+            $this->dataContainer[$containerKey] = $value;
+        };
+    }
+}
