@@ -56,6 +56,24 @@ abstract class DataContainerAccessor
      * @param string           $propertyName
      * @param string           $containerKey
      */
+    final protected function registerReadonlyStringProperty(
+        PropertyRegister $propertyRegister,
+        string $propertyName,
+        string $containerKey
+    ): void {
+        $propertyRegister
+            ->newVirtualProperty(
+                $propertyName,
+                $this->generateStringGetter($containerKey),
+                null
+            );
+    }
+
+    /**
+     * @param PropertyRegister $propertyRegister
+     * @param string           $propertyName
+     * @param string           $containerKey
+     */
     final protected function registerIntProperty(
         PropertyRegister $propertyRegister,
         string $propertyName,
@@ -66,6 +84,24 @@ abstract class DataContainerAccessor
                 $propertyName,
                 $this->generateIntGetter($containerKey),
                 $this->generateIntSetter($containerKey)
+            );
+    }
+
+    /**
+     * @param PropertyRegister $propertyRegister
+     * @param string           $propertyName
+     * @param string           $containerKey
+     */
+    final protected function registerReadonlyIntProperty(
+        PropertyRegister $propertyRegister,
+        string $propertyName,
+        string $containerKey
+    ): void {
+        $propertyRegister
+            ->newVirtualProperty(
+                $propertyName,
+                $this->generateIntGetter($containerKey),
+                null
             );
     }
 
