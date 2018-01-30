@@ -5,7 +5,7 @@ namespace Bellisq\Request\Containers;
 use Bellisq\Request\Containers\RequestDataContainer;
 use Closure;
 use Strict\Property\Intermediate\PropertyRegister;
-use Strict\Property\Utility\StrictPropertyContainer;
+use Bellisq\Request\Containers\DataContainerAccessor;
 use DomainException;
 
 
@@ -17,26 +17,27 @@ use DomainException;
  * @package bellisq/request
  * @since 1.0.0
  *
- * @property string   $scheme
- * @property string   $host
- * @property int      $port
- * @property string   $path
- * @property string   $query
- * @property string   $method
- * @property string   $protocol
+ * @property string      $scheme
+ * @property string      $host
+ * @property int         $port
+ * @property string      $path
+ * @property string      $query
+ * @property string      $method
+ * @property string      $protocol
  * @property-read string $uri
  */
 class HttpRequestLineMutable
-    extends StrictPropertyContainer
+    extends DataContainerAccessor
 {
-    /** @var RequestDataContainer */
-    private $dataContainer;
-
+    /**
+     * HttpRequestLineMutable constructor.
+     *
+     * @param array                $server
+     * @param RequestDataContainer $rdc
+     */
     public function __construct(array $server, RequestDataContainer $rdc)
     {
-        parent::__construct();
-
-        $this->dataContainer = $rdc;
+        parent::__construct($rdc);
 
         $https = false;
         if (isset($server['HTTP_X_FORWARDED_PROTO'])) {
@@ -63,6 +64,9 @@ class HttpRequestLineMutable
         $this->protocol = $server['SERVER_PROTOCOL'] ?? RequestDataContainer::PROTOCOL_HTTP11;
     }
 
+    /**
+     * @param PropertyRegister $propertyRegister
+     */
     protected function registerProperty(PropertyRegister $propertyRegister): void
     {
         $exl = [
@@ -77,12 +81,7 @@ class HttpRequestLineMutable
             $this->registerStringProperty($propertyRegister, $key, $value);
         }
 
-        $propertyRegister
-            ->newVirtualProperty(
-                'port',
-                $this->generateIntGetter(RequestDataContainer::VAR_LINE_PORT),
-                $this->generateIntSetter(RequestDataContainer::VAR_LINE_PORT)
-            );
+        $this->registerIntProperty($propertyRegister, 'port', RequestDataContainer::VAR_LINE_PORT);
 
         $propertyRegister
             ->newVirtualProperty(
@@ -101,93 +100,30 @@ class HttpRequestLineMutable
                 null
             );
 
-        $allowedScheme = [
+        $this->restrictStringCandidates($propertyRegister, 'scheme', [
             RequestDataContainer::SCHEME_HTTPS => true,
             RequestDataContainer::SCHEME_HTTP  => true
-        ];
-        $propertyRegister
-            ->addSetterHook('scheme', function (string $value, Closure $next) use ($allowedScheme): void {
-                if (!isset($allowedScheme[$value])) {
-                    throw new DomainException;
-                }
-                $next($value);
-            });
+        ]);
 
-        $propertyRegister
-            ->addSetterHook('port', function (int $value, Closure $next) {
-                if ($value < 0 || 65535 < $value) {
-                    throw new DomainException;
-                }
-                $next($value);
-            });
+        $this->restrictIntRange($propertyRegister, 'port', 0, 65535);
 
-        $allowedMethod = [
+        $this->restrictStringCandidates($propertyRegister, 'method', [
             RequestDataContainer::METHOD_GET    => true,
             RequestDataContainer::METHOD_POST   => true,
             RequestDataContainer::METHOD_PUT    => true,
             RequestDataContainer::METHOD_DELETE => true,
-        ];
+        ]);
         $propertyRegister
-            ->addSetterHook('method', function (string $value, Closure $next) use ($allowedMethod) {
-                if (!isset($allowedMethod[$value])) {
-                    throw new DomainException;
-                }
+            ->addSetterHook('method', function (string $value, Closure $next): void {
                 $next($value);
                 $this->dataContainer->methodChanged();
             });
 
-        $allowedProtocol = [
+        $this->restrictStringCandidates($propertyRegister, 'protocol', [
             RequestDataContainer::PROTOCOL_HTTP10 => true,
             RequestDataContainer::PROTOCOL_HTTP11 => true,
             RequestDataContainer::PROTOCOL_HTTP20 => true,
-        ];
-        $propertyRegister
-            ->addSetterHook('protocol', function (string $value, Closure $next) use ($allowedProtocol) {
-                if (!isset($allowedProtocol[$value])) {
-                    throw new DomainException;
-                }
-                $next($value);
-            });
+        ]);
     }
 
-    private function registerStringProperty(
-        PropertyRegister $propertyRegister,
-        string $propertyName,
-        string $containerKey
-    ): void {
-        $propertyRegister
-            ->newVirtualProperty(
-                $propertyName,
-                $this->generateStringGetter($containerKey),
-                $this->generateStringSetter($containerKey)
-            );
-    }
-
-    private function generateStringGetter(string $containerKey): Closure
-    {
-        return function () use ($containerKey): string {
-            return $this->dataContainer[$containerKey];
-        };
-    }
-
-    private function generateStringSetter(string $containerKey): Closure
-    {
-        return function (string $value) use ($containerKey): void {
-            $this->dataContainer[$containerKey] = $value;
-        };
-    }
-
-    private function generateIntGetter(string $containerKey): Closure
-    {
-        return function () use ($containerKey): int {
-            return $this->dataContainer[$containerKey];
-        };
-    }
-
-    private function generateIntSetter(string $containerKey): Closure
-    {
-        return function (int $value) use ($containerKey): void {
-            $this->dataContainer[$containerKey] = $value;
-        };
-    }
 }
