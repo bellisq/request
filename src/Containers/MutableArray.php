@@ -113,7 +113,7 @@ class MutableArray
      */
     protected static function validateOffset($offset): void
     {
-        if (!is_string($offset) || is_numeric($offset)) {
+        if (!is_string($offset) && !is_numeric($offset)) {
             throw new IllegalOffsetTypeException;
         }
     }
