@@ -148,8 +148,10 @@ class MutableArray
         foreach ($input as $key => $value) {
             if (is_array($value)) {
                 $output[$key] = self::cloneArray($value);
-            } else {
+            } else if (is_object($value)) {
                 $output[$key] = clone $value;
+            } else {
+                $output[$key] = $value;
             }
         }
         return $output;
