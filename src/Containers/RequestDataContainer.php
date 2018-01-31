@@ -2,6 +2,7 @@
 
 namespace Bellisq\Request\Containers;
 
+use Bellisq\Request\Constants\RequestConstantsInterface;
 use Bellisq\Request\Containers\MutableArray;
 
 
@@ -9,28 +10,14 @@ use Bellisq\Request\Containers\MutableArray;
  * [Class] Request Data Container
  *
  * @author Showsay You <akizuki.c10.l65@gmail.com>
- * @copyright 2017 Bellisq. All Rights Reserved.
+ * @copyright 2018 Bellisq. All Rights Reserved.
  * @package bellisq/request
  * @since 1.0.0
  */
 class RequestDataContainer
     extends MutableArray
+    implements RequestConstantsInterface
 {
-    public const METHOD_GET    = 'GET';
-    public const METHOD_POST   = 'POST';
-    public const METHOD_PUT    = 'PUT';
-    public const METHOD_DELETE = 'DELETE';
-
-    public const PORT_HTTP = 80;
-    public const PORT_HTTPS = 443;
-
-    public const SCHEME_HTTP = 'http';
-    public const SCHEME_HTTPS = 'https';
-
-    public const PROTOCOL_HTTP10 = 'HTTP/1.0';
-    public const PROTOCOL_HTTP11 = 'HTTP/1.1';
-    public const PROTOCOL_HTTP20 = 'HTTP/2.0';
-
     public const VAR_LINE_SCHEME   = 'line.scheme';
     public const VAR_LINE_HOST     = 'line.host';
     public const VAR_LINE_PORT     = 'line.port';
@@ -65,14 +52,24 @@ class RequestDataContainer
     {
         assert($this->offsetExists(self::VAR_LINE_METHOD));
 
-        $this->offsetSet(self::VAR_BODY, null);
-        $this->offsetSet(self::VAR_PARSED_POST, null);
-        $this->offsetSet(self::VAR_PARSED_FILES, null);
         if (self::METHOD_POST === $this->offsetGet(self::VAR_LINE_METHOD)) {
-            $this->offsetSet(self::VAR_PARSED_POST, new MutableArray());
-            $this->offsetSet(self::VAR_PARSED_FILES, new MutableArray());
+            $this->offsetSet(self::VAR_BODY, null);
+            if (is_null($this->offsetGet(self::VAR_PARSED_POST))) {
+                $this->offsetSet(self::VAR_PARSED_POST, new MutableArray());
+            }
+            if (is_null($this->offsetGet(self::VAR_PARSED_FILES))) {
+                $this->offsetSet(self::VAR_PARSED_FILES, new MutableArray());
+            }
         } else if (self::METHOD_PUT === $this->offsetGet(self::VAR_LINE_METHOD)) {
-            $this->offsetSet(self::VAR_BODY, '');
+            if (is_null($this->offsetGet(self::VAR_BODY))) {
+                $this->offsetSet(self::VAR_BODY, '');
+            }
+            $this->offsetSet(self::VAR_PARSED_POST, null);
+            $this->offsetSet(self::VAR_PARSED_FILES, null);
+        } else {
+            $this->offsetSet(self::VAR_BODY, null);
+            $this->offsetSet(self::VAR_PARSED_POST, null);
+            $this->offsetSet(self::VAR_PARSED_FILES, null);
         }
     }
 }

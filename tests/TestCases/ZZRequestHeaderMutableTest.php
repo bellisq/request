@@ -18,7 +18,9 @@ class ZZRequestHeaderMutableTest
             'HTTP_ACCEPT_LANGUAGE'   => 'ja,en-US;q=0.9,en;q=0.8',
             'HTTP_IF_MODIFIED_SINCE' => 'Fri Jan 01 2010 00:00:00 GMT',
             'HTTP_IF_NONE_MATCH'     => '"3342933429"',
-            'HTTP_REFERER'           => 'https://example.com'
+            'HTTP_REFERER'           => 'https://example.com',
+            'HTTP_X_TEST'            => 'GLHF',
+            'HTSS_X_TEST'            => 'NNHK',
         ], new RequestDataContainer());
 
         $this->assertEquals('33-4 User Agent', $hrhm->userAgent);
@@ -28,6 +30,12 @@ class ZZRequestHeaderMutableTest
         $this->assertEquals(1262304000, $hrhm->ifModifiedSince);
         $this->assertEquals('"3342933429"', $hrhm->ifNoneMatch);
         $this->assertEquals('https://example.com', $hrhm->referer);
+
+        $this->assertEquals('GLHF', $hrhm->get('HTTP_X_TEST'));
+        $this->assertNull($hrhm->get('HTSS_X_TEST'));
+
+        $hrhm->set('HTSS_X_TEST', 'NAAA');
+        $this->assertEquals('NAAA', $hrhm->get('HTSS_X_TEST'));
     }
 
     public function testConstructionNone()

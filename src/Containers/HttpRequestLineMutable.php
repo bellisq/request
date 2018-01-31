@@ -13,7 +13,7 @@ use DomainException;
  * [Class] HTTP Request Line (Mutable)
  *
  * @author Showsay You <akizuki.c10.l65@gmail.com>
- * @copyright 2017 Bellisq. All Rights Reserved.
+ * @copyright 2018 Bellisq. All Rights Reserved.
  * @package bellisq/request
  * @since 1.0.0
  *
@@ -32,12 +32,16 @@ class HttpRequestLineMutable
     /**
      * HttpRequestLineMutable constructor.
      *
-     * @param array                $server
+     * @param array|null           $server
      * @param RequestDataContainer $rdc
      */
-    public function __construct(array $server, RequestDataContainer $rdc)
+    public function __construct(?array $server, RequestDataContainer $rdc)
     {
         parent::__construct($rdc);
+
+        if (is_null($server)) {
+            return;
+        }
 
         $https = false;
         if (isset($server['HTTP_X_FORWARDED_PROTO'])) {

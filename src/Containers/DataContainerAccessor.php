@@ -13,7 +13,7 @@ use TypeError;
  * [Class] Data Container Accessor
  *
  * @author Showsay You <akizuki.c10.l65@gmail.com>
- * @copyright 2017 Bellisq. All Rights Reserved.
+ * @copyright 2018 Bellisq. All Rights Reserved.
  * @package bellisq/request
  * @since 1.0.0
  */
@@ -223,7 +223,61 @@ abstract class DataContainerAccessor
                     /** @var $ma MutableArray */
                     $ma = $this->dataContainer[$containerKey];
                     return $ma->getArrayCopy();
-                },null
+                }, null
+            );
+    }
+
+    /**
+     * @param PropertyRegister $propertyRegister
+     * @param string           $propertyName
+     * @param string           $containerKey
+     */
+    final protected function registerNullableArrayProperty(
+        PropertyRegister $propertyRegister,
+        string $propertyName,
+        string $containerKey
+    ): void {
+        $propertyRegister
+            ->newVirtualProperty(
+                $propertyName,
+                function () use ($containerKey): ?MutableArray {
+                    return $this->dataContainer[$containerKey];
+                },
+                function ($value) use ($containerKey, $propertyName): void {
+                    if (is_array($value)) {
+                        $this->dataContainer[$containerKey] = new MutableArray($value);
+                    } else if ($value instanceof MutableArray) {
+                        $this->dataContainer[$containerKey] = $value;
+                    } else if (is_null($value)) {
+                        $this->dataContainer[$containerKey] = $value;
+                    } else {
+                        throw new TypeError("Property \${$propertyName} must be of the type array, of the type MutableArray or null.");
+                    }
+                }
+            );
+    }
+
+    /**
+     * @param PropertyRegister $propertyRegister
+     * @param string           $propertyName
+     * @param string           $containerKey
+     */
+    final protected function registerReadonlyNullableArrayProperty(
+        PropertyRegister $propertyRegister,
+        string $propertyName,
+        string $containerKey
+    ): void {
+        $propertyRegister
+            ->newVirtualProperty(
+                $propertyName,
+                function () use ($containerKey): ?array {
+                    $ma = $this->dataContainer[$containerKey];
+                    if ($ma instanceof MutableArray) {
+                        return $ma->getArrayCopy();
+                    } else {
+                        return null;
+                    }
+                }, null
             );
     }
 
