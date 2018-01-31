@@ -52,14 +52,24 @@ class RequestDataContainer
     {
         assert($this->offsetExists(self::VAR_LINE_METHOD));
 
-        $this->offsetSet(self::VAR_BODY, null);
-        $this->offsetSet(self::VAR_PARSED_POST, null);
-        $this->offsetSet(self::VAR_PARSED_FILES, null);
         if (self::METHOD_POST === $this->offsetGet(self::VAR_LINE_METHOD)) {
-            $this->offsetSet(self::VAR_PARSED_POST, new MutableArray());
-            $this->offsetSet(self::VAR_PARSED_FILES, new MutableArray());
+            $this->offsetSet(self::VAR_BODY, null);
+            if (is_null($this->offsetGet(self::VAR_PARSED_POST))) {
+                $this->offsetSet(self::VAR_PARSED_POST, new MutableArray());
+            }
+            if (is_null($this->offsetGet(self::VAR_PARSED_FILES))) {
+                $this->offsetSet(self::VAR_PARSED_FILES, new MutableArray());
+            }
         } else if (self::METHOD_PUT === $this->offsetGet(self::VAR_LINE_METHOD)) {
-            $this->offsetSet(self::VAR_BODY, '');
+            if (is_null($this->offsetGet(self::VAR_BODY))) {
+                $this->offsetSet(self::VAR_BODY, '');
+            }
+            $this->offsetSet(self::VAR_PARSED_POST, null);
+            $this->offsetSet(self::VAR_PARSED_FILES, null);
+        } else {
+            $this->offsetSet(self::VAR_BODY, null);
+            $this->offsetSet(self::VAR_PARSED_POST, null);
+            $this->offsetSet(self::VAR_PARSED_FILES, null);
         }
     }
 }
