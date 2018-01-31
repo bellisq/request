@@ -35,21 +35,24 @@ class RequestMutable
     /**
      * RequestMutable constructor.
      *
-     * @param array $server
-     * @param array $get
-     * @param array $post
-     * @param array $files
-     * @param array $cookie
+     * @param array|null                $server
+     * @param array|null                $get
+     * @param array|null                $post
+     * @param array|null                $files
+     * @param array|null                $cookie
+     * @param RequestDataContainer|null $rdc
      */
     public function __construct(
-        array $server,
-        array $get,
-        array $post,
-        array $files,
-        array $cookie
+        ?array $server,
+        ?array $get,
+        ?array $post,
+        ?array $files,
+        ?array $cookie,
+        ?RequestDataContainer $rdc = null
     ) {
-        $rdc = new RequestDataContainer;
+        $rdc = $rdc ?? new RequestDataContainer;
         parent::__construct($rdc);
+
         $this->setPropertyDirectly('line', new HttpRequestLineMutable($server, $rdc));
         $this->setPropertyDirectly('header', new HttpRequestHeaderMutable($server, $rdc));
         $this->setPropertyDirectly('remote', new HttpRemoteInfoMutable($server, $rdc));
