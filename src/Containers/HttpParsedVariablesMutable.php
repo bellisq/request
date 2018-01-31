@@ -26,22 +26,31 @@ class HttpParsedVariablesMutable
     /**
      * HttpParsedVariablesMutable constructor.
      *
-     * @param array                $get
-     * @param array                $post
-     * @param array                $files
-     * @param array                $cookie
+     * @param array|null           $get
+     * @param array|null           $post
+     * @param array|null           $files
+     * @param array|null           $cookie
      * @param RequestDataContainer $rdc
      */
     public function __construct(
-        array $get,
-        array $post,
-        array $files,
-        array $cookie,
+        ?array $get,
+        ?array $post,
+        ?array $files,
+        ?array $cookie,
         RequestDataContainer $rdc
     ) {
         assert(isset($rdc[RequestDataContainer::VAR_LINE_METHOD]));
 
         parent::__construct($rdc);
+
+        if (is_null($get) && is_null($post) && is_null($files) && is_null($cookie)) {
+            return;
+        }
+
+        $get = $get ?? [];
+        $post = $post ?? [];
+        $files = $files ?? [];
+        $cookie = $cookie ?? [];
 
         $this->get = $get;
         if ($rdc[RequestDataContainer::VAR_LINE_METHOD] === RequestDataContainer::METHOD_POST) {

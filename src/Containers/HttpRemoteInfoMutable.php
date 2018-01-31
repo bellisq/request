@@ -23,12 +23,17 @@ class HttpRemoteInfoMutable
     /**
      * HttpRemoteInfoMutable constructor.
      *
-     * @param array                $server
+     * @param array|null           $server
      * @param RequestDataContainer $rdc
      */
-    public function __construct(array $server, RequestDataContainer $rdc)
+    public function __construct(?array $server, RequestDataContainer $rdc)
     {
         parent::__construct($rdc);
+
+        if (is_null($server)) {
+            return;
+        }
+
 
         $this->address = $server['REMOTE_ADDR'];
         $this->port = (int)$server['REMOTE_PORT'];
