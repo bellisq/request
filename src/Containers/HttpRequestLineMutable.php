@@ -51,7 +51,7 @@ class HttpRequestLineMutable
         }
         $this->scheme = ($https ? RequestDataContainer::SCHEME_HTTPS : RequestDataContainer::SCHEME_HTTP);
 
-        $this->host = $server['HTTP_HOST'] ?? '';
+        $this->host = $server['HTTP_X_FORWARDED_HOST'] ?? $server['HTTP_HOST'] ?? '';
 
         if (isset($server['HTTP_X_FORWARDED_PROTO']) || !isset($server['SERVER_PORT'])) {
             $this->port = $https ? RequestDataContainer::PORT_HTTPS : RequestDataContainer::PORT_HTTP;

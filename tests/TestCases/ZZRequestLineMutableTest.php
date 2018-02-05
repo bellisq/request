@@ -11,11 +11,13 @@ use PHPUnit\Framework\TestCase;
 class ZZRequestLineMutableTest
     extends TestCase
 {
+
     public function testForwardedConstructionHTTPS()
     {
         $hrlm = new HttpRequestLineMutable([
             'HTTP_X_FORWARDED_PROTO' => 'https',
-            'HTTP_HOST'              => 'example.com',
+            'HTTP_X_FORWARDED_HOST'  => 'example.com',
+            'HTTP_HOST'              => 'example.org',
             'SERVER_PORT'            => 400,
             'REQUEST_URI'            => '/index?p=1024&q=2048',
             'QUERY_STRING'           => 'p=1024&q=2048',
