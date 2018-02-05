@@ -54,7 +54,7 @@ class Request
      */
     public function __construct(RequestMutable $requestMutable)
     {
-        $rdc = $requestMutable->dataContainer;
+        $rdc = clone $requestMutable->dataContainer;
         parent::__construct($rdc);
 
         $this->setPropertyDirectly('line', new HttpRequestLineImmutable($rdc));
