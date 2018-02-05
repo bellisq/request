@@ -109,6 +109,10 @@ class HttpRequestLineMutable
             RequestDataContainer::SCHEME_HTTP  => true
         ]);
 
+        $propertyRegister->addSetterHook('scheme', function (string $value, Closure $next): void {
+            $next(strtolower($value));
+        });
+
         $this->restrictIntRange($propertyRegister, 'port', 0, 65535);
 
         $this->restrictStringCandidates($propertyRegister, 'method', [
@@ -119,7 +123,7 @@ class HttpRequestLineMutable
         ]);
         $propertyRegister
             ->addSetterHook('method', function (string $value, Closure $next): void {
-                $next($value);
+                $next(strtoupper($value));
                 $this->dataContainer->methodChanged();
             });
 
@@ -128,6 +132,10 @@ class HttpRequestLineMutable
             RequestDataContainer::PROTOCOL_HTTP11 => true,
             RequestDataContainer::PROTOCOL_HTTP20 => true,
         ]);
+        $propertyRegister
+            ->addSetterHook('protocol', function (string $value, Closure $next): void {
+                $next(strtoupper($value));
+            });
     }
 
 }
