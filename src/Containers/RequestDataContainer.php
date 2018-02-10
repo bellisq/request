@@ -54,14 +54,17 @@ class RequestDataContainer
 
         if (self::METHOD_POST === $this->offsetGet(self::VAR_LINE_METHOD)) {
             $this->offsetSet(self::VAR_BODY, null);
-            if (is_null($this->offsetGet(self::VAR_PARSED_POST))) {
+            if ($this->offsetExists(self::VAR_PARSED_POST)
+                && is_null($this->offsetGet(self::VAR_PARSED_POST))) {
                 $this->offsetSet(self::VAR_PARSED_POST, new MutableArray());
             }
-            if (is_null($this->offsetGet(self::VAR_PARSED_FILES))) {
+            if ($this->offsetExists(self::VAR_PARSED_FILES)
+                && is_null($this->offsetGet(self::VAR_PARSED_FILES))) {
                 $this->offsetSet(self::VAR_PARSED_FILES, new MutableArray());
             }
         } else if (self::METHOD_PUT === $this->offsetGet(self::VAR_LINE_METHOD)) {
-            if (is_null($this->offsetGet(self::VAR_BODY))) {
+            if ($this->offsetExists(self::VAR_BODY)
+                && is_null($this->offsetGet(self::VAR_BODY))) {
                 $this->offsetSet(self::VAR_BODY, '');
             }
             $this->offsetSet(self::VAR_PARSED_POST, null);
